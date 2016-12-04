@@ -51,7 +51,7 @@ def find_type(orig, name):
         # anything fancier here.
         field = typ.fields()[0]
         if not field.is_base_class:
-            raise ValueError, "Cannot find type %s::%s" % (str(orig), name)
+            raise ValueError("Cannot find type %s::%s" % (str(orig), name))
         typ = field.type
 
 class StdStringPrinter:
@@ -121,7 +121,7 @@ class StdPairPrinter:
         self.val = val;
         
     def children (self):
-		return [('first', self.val['first']), ('second', self.val['second'])]
+        return [('first', self.val['first']), ('second', self.val['second'])]
 
     def to_string (self):
         return 'pair'
@@ -141,7 +141,7 @@ class StdTuplePrinter:
         def __iter__ (self):
             return self
         
-        def next (self):
+        def __next__ (self):
             if self.count >= len(self.fields):
                 raise StopIteration
             self.field = self.head.cast(self.fields[self.count].type)['value']
@@ -176,7 +176,7 @@ class StdListPrinter:
         def __iter__(self):
             return self
 
-        def next(self):
+        def __next__(self):
             if self.base == self.head:
                 raise StopIteration
             elt = self.base.cast(self.nodetype).dereference()
@@ -198,7 +198,7 @@ class StdListPrinter:
         if self.val['__end_']['__next_'] == self.val['__end_'].address:
             return 'empty %s' % (self.typename)
         return '%s' % (self.typename)
-	
+
 #    def display_hint(self):
 #        return 'array'
 
@@ -223,7 +223,7 @@ class StdForwardListPrinter:
         def __iter__(self):
             return self
 
-        def next(self):
+        def __next__(self):
             if self.node == 0:
                 raise StopIteration
             
@@ -264,7 +264,7 @@ class StdVectorPrinter:
         def __iter__(self):
             return self
 
-        def next(self):
+        def __next__(self):
             count = self.count
             self.count = self.count + 1
             if self.bitvec:
@@ -294,7 +294,7 @@ class StdVectorPrinter:
         for f in val.type.fields():
             if f.name == '__bits_per_word':
                 self.is_bool = 1
- 
+
     def children(self):
         if self.is_bool:
             return self._iterator(self.val['__begin_'],
@@ -368,22 +368,22 @@ class StdDequePrinter:
             else:
                 self.p = self.mp.dereference() + start % block_size
                 self.end_p = self.end_mp.dereference() + self.end_p % block_size
-            
+
         def __iter__(self):
             return self
 
-        def next(self):
+        def __next__(self):
             old_p = self.p
-            
+
             self.count += 1
             self.p += 1;
             if (self.p - self.mp.dereference()) == self.block_size:
                 self.mp += 1
                 self.p = self.mp.dereference()
-                
+
             if (self.mp > self.end_mp) or ((self.p > self.end_p) and (self.mp == self.end_mp)):
                 raise StopIteration
-                
+
             return ('[%d]' % int(self.count - 1), old_p.dereference())
 
     def __init__(self, typename, val):
@@ -395,14 +395,14 @@ class StdDequePrinter:
         if self.size == 0:
             return 'empty %s' % self.typename
         else:
-            return '%s (size=%d)' % (self.typename, long(self.size))
+            return '%s (size=%d)' % (self.typename, int(self.size))
 
     def children(self):
         block_map = self.val['__map_']
         return self._iterator(self.size, self.val['__block_size'],
                               self.val['__start_'], block_map['__begin_'],
                               block_map['__end_'])
-    
+
 #    def display_hint (self):
 #        return 'array'
 
@@ -450,7 +450,7 @@ class StdBitsetPrinter:
         bits_per_word = self.val['__bits_per_word']
         word_index = 0
         result = []
-        
+
         while word_index < words_count:
             bit_index = 0
             word = words[word_index]
@@ -460,7 +460,7 @@ class StdBitsetPrinter:
                 word >>= 1
                 bit_index += 1
             word_index += 1
-        
+
         return result
 
 class StdSetPrinter:
@@ -474,12 +474,12 @@ class StdSetPrinter:
 
         def __iter__(self):
             return self
-        
+
         def __len__(self):
             return len(self.rbiter)
 
-        def next(self):
-            item = self.rbiter.next()
+        def __next__(self):
+            item = next(self.rbiter)
             item = item.dereference()['__value_']
             result = (('[%d]' % self.count), item)
             self.count += 1
@@ -499,7 +499,7 @@ class StdSetPrinter:
 
     def children (self):
         return self._iterator(self.rbiter)
-    
+
 #    def display_hint (self):
 #        return 'set'
 
@@ -516,10 +516,10 @@ class RbtreeIterator:
     def __len__(self):
         return int (self.size)
 
-    def next(self):
+    def __next__(self):
         if self.count == self.size:
             raise StopIteration
-        
+
         result = self.node
         self.count += 1
         if self.count < self.size:
@@ -535,7 +535,7 @@ class RbtreeIterator:
                     node = parent_node
                     parent_node = parent_node.dereference()['__parent_']
                 node = parent_node
-                
+
             self.node = node.cast(self.node_type)
         return result
 
@@ -559,17 +559,17 @@ class StdMapPrinter:
 
         def __iter__(self):
             return self
-        
+
         def __len__(self):
             return len(self.rbiter)
 
-        def next(self):
-            item = self.rbiter.next()
+        def __next__(self):
+            item = next(self.rbiter)
             item = item.dereference()['__value_']
             result = ('[%d] %s' % (self.count, str(item['__cc']['first'])), item['__cc']['second'])
             self.count += 1
             return result
-        
+
     def __init__ (self, typename, val):
         self.typename = typename
         self.val = val
@@ -605,14 +605,14 @@ class HashtableIterator:
 
     def __iter__ (self):
         return self
-    
+
     def __len__(self):
         return self.size
 
-    def next (self):
+    def __next__ (self):
         if self.node == 0:
             raise StopIteration
-        
+
         node = self.node.dereference()
         result = node['__value_']
         self.node = node['__next_']
@@ -661,8 +661,8 @@ class UnorderedSetPrinter:
         return '[%d]' % i
 
     def children (self):
-        counter = itertools.imap (self.format_count, itertools.count())
-        return itertools.izip (counter, self.hashtableiter)
+        counter = map (self.format_count, itertools.count())
+        return zip (counter, self.hashtableiter)
 
 class UnorderedMapPrinter:
     "Print a std::unordered_map"
@@ -683,13 +683,25 @@ class UnorderedMapPrinter:
         else:
             return '%s (count=%d)' % (self.typename, self.size)
 
+    class _iterator:
+        def __init__(self, htiter):
+            self.htiter = htiter
+            self.count = 0
+
+        def __iter__(self):
+            return self
+
+        def __len__(self):
+            return len(self.htiter)
+
+        def __next__(self):
+            item = next(self.htiter)
+            result = ('[%d] %s' % (self.count, str(item['__cc']['first'])), item['__cc']['second']);
+            self.count += 1
+            return result
+
     def children (self):
-        result = []
-        count = 0
-        for elt in self.hashtableiter:
-            result.append(('[%d] %s' % (count, str(elt['first'])), elt['second']))
-            count += 1
-        return result
+        return self._iterator(self.hashtableiter);
 
 #    def display_hint (self):
 #        return 'map'
@@ -723,7 +735,7 @@ class Printer(object):
         # A small sanity check.
         # FIXME
         if not self.compiled_rx.match(name + '<>'):
-            raise ValueError, 'libstdc++ programming error: "%s" does not match' % name
+            raise ValueError('libstdc++ programming error: "%s" does not match' % name)
         printer = RxPrinter(name, function)
         self.subprinters.append(printer)
         self.lookup[name] = printer
