@@ -22,3 +22,11 @@ This version of pretty printers is written in **python 3** to be used with gdb l
 **Python 2** version of pretty printers for libc++ can be found here:
 
 https://github.com/koutheir/libcxx-pretty-printers
+
+## installation
+
+To use pretty printers:
+```
+git clone https://github.com/koja/libcxx-pretty-printers ~/.gdb/libcxx-pretty-printers
+cp -b ~/.gdb/libcxx-pretty-printers/src/gdbinit ~/.gdbinit
+```
