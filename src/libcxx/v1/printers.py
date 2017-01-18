@@ -505,9 +505,10 @@ class StdSetPrinter:
 
 class RbtreeIterator:
     def __init__(self, rbtree):
-        self.node = rbtree['__begin_node_']
+        self.val_ptr = find_type(rbtree.type, '__node_pointer')
+        self.node_type = find_type(rbtree.type, '__node_base_pointer')
+        self.node = rbtree['__begin_node_'].cast(self.node_type)
         self.size = rbtree['__pair3_']['__first_']
-        self.node_type = self.node.type
         self.count = 0
 
     def __iter__(self):
@@ -537,7 +538,7 @@ class RbtreeIterator:
                 node = parent_node
 
             self.node = node.cast(self.node_type)
-        return result
+        return result.cast( self.val_ptr )
 
 class StdRbtreeIteratorPrinter:
     "Print std::set::iterator"
